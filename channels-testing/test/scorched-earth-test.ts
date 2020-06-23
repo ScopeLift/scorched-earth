@@ -2,6 +2,7 @@ const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 const { expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 
+
 const ScorchedEarth = contract.fromArtifact('ScorchedEarth');
 
 describe('ScorchedEarth', () => {
