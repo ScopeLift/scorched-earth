@@ -1,4 +1,4 @@
-const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
+import { accounts, contract, web3 } from '@openzeppelin/test-environment';
 const { expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 
@@ -15,7 +15,18 @@ import {
     replaceAddressesAndBigNumberify,
     encodeOutcome,
     randomExternalDestination,
+    ContractArtifacts
 } from '@statechannels/nitro-protocol';
+
+const NitroAdjudicator = contract.fromABI(
+        ContractArtifacts.NitroAdjudicatorArtifact.abi,
+        ContractArtifacts.NitroAdjudicatorArtifact.bytecode
+    );
+
+const EthAssetHolder = contract.fromABI(
+        ContractArtifacts.EthAssetHolderArtifact.abi,
+        ContractArtifacts.EthAssetHolderArtifact.bytecode
+    );
 
 enum Phase {
     Share,
@@ -47,8 +58,11 @@ function encodeSEData(seData: SEData): string {
 }
 
 describe('ScorchedEarth', () => {
-    const [ deployer ] = accounts;
+    const [ deployer, user, suggester ] = accounts;
     let instance: any;
+
+    let adjudicator: any;
+    let assetHolder: any;
 
     let addresses = {
         user: randomExternalDestination(), // why are addresses from these function padded with leading 0's?
@@ -57,11 +71,19 @@ describe('ScorchedEarth', () => {
 
     before(async ()=> {
         instance = await ScorchedEarth.new({from: deployer});
+        adjudicator = await NitroAdjudicator.new({from: deployer});
+        assetHolder = await EthAssetHolder.new(adjudicator.address, {from: deployer});
     });
 
-    it('should see the deployed ScorchedEarth contract', async () => {
+    it('should see the deployed ScorchedEarth, adjudicator, & asset holder contracts', async () => {
         expect(instance.address.startsWith('0x')).to.be.true;
         expect(instance.address.length).to.equal(42);
+
+        expect(adjudicator.address.startsWith('0x')).to.be.true;
+        expect(adjudicator.address.length).to.equal(42);
+
+        expect(assetHolder.address.startsWith('0x')).to.be.true;
+        expect(assetHolder.address.length).to.equal(42);
     });
 
     it('should not be valid transition when Phase is unchanged', async () => {
