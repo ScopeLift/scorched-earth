@@ -1,13 +1,8 @@
 import { accounts, contract, web3 } from '@openzeppelin/test-environment';
-const { expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
-const { expect } = require('chai');
-
-const ScorchedEarth = contract.fromArtifact('ScorchedEarth');
-
+import { expectEvent, expectRevert } from '@openzeppelin/test-helpers';
+import { expect } from 'chai';
 import { ethers } from 'ethers';
-const AddressZero = ethers.constants.AddressZero;
-const defaultAbiCoder = ethers.utils.defaultAbiCoder;
-const bigNumberify = ethers.BigNumber.from;
+
 import {
     Allocation,
     AssetOutcomeShortHand,
@@ -17,6 +12,13 @@ import {
     randomExternalDestination,
     ContractArtifacts
 } from '@statechannels/nitro-protocol';
+
+const ScorchedEarth = contract.fromArtifact('ScorchedEarth');
+
+const AddressZero = ethers.constants.AddressZero;
+const defaultAbiCoder = ethers.utils.defaultAbiCoder;
+const bigNumberify = ethers.BigNumber.from;
+
 
 const NitroAdjudicator = contract.fromABI(
         ContractArtifacts.NitroAdjudicatorArtifact.abi,
