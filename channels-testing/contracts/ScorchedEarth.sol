@@ -82,8 +82,8 @@ contract ScorchedEarth is ForceMoveApp {
         );
 
         require(
-            allocation.length == 2,
-            'ScorchedEarth: Allocation length must equal number of participants (i.e. 2)'
+            allocation.length == 3,
+            'ScorchedEarth: Allocation length must equal number of participants + 1 (i.e. 3)'
         );
 
         return allocation;
@@ -96,12 +96,17 @@ contract ScorchedEarth is ForceMoveApp {
     {
         require(
             _toAllocation[0].destination == _fromAllocation[0].destination,
-            'ScorchedEarth: Destination playerA may not change'
+            'ScorchedEarth: Destination participantA may not change'
         );
 
         require(
             _toAllocation[1].destination == _fromAllocation[1].destination,
-            'ScorchedEarth: Destination playerB may not change'
+            'ScorchedEarth: Destination participantB may not change'
+        );
+
+        require(
+            _toAllocation[2].destination == _fromAllocation[2].destination,
+            'ScorchedEarth: Destination burn beneficiary may not change'
         );
     }
 
