@@ -159,6 +159,22 @@ describe('ScorchedEarth', () => {
         );
 
         expect(checkpointTx.receipt.status).to.be.true;
+
+        const depositAmount = ethers.utils.parseEther('10');
+
+        const suggesterDepositTx = await assetHolder.deposit(channelId, 0, depositAmount, {
+            from: suggester,
+            value: depositAmount.toString(),
+        });
+
+        expect(suggesterDepositTx.receipt.status).to.be.true;
+
+        const userDepositTx = await assetHolder.deposit(channelId, depositAmount, depositAmount, {
+            from: user,
+            value: depositAmount.toString(),
+        });
+
+        expect(userDepositTx.receipt.status).to.be.true;
     });
 
     it('should not be valid transition when Phase is unchanged', async () => {
