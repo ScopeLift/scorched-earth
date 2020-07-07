@@ -146,19 +146,19 @@ describe('ScorchedEarth', () => {
         ];
 
         const whoSignedWhat = [0, 1];
-        const sigs = await signStates([state0, state1], wallets, whoSignedWhat);
+        const preFundSigs = await signStates([state0, state1], wallets, whoSignedWhat);
 
-        const checkpointTx = await adjudicator.checkpoint(
+        const preFundCheckpointTx = await adjudicator.checkpoint(
             getFixedPart(state1),
             state1.turnNum,
             [getVariablePart(state0), getVariablePart(state1)],
             0,
-            sigs,
+            preFundSigs,
             whoSignedWhat,
             {from: user}
         );
 
-        expect(checkpointTx.receipt.status).to.be.true;
+        expect(preFundCheckpointTx.receipt.status).to.be.true;
 
         const depositAmount = ethers.utils.parseEther('10');
 
@@ -175,6 +175,40 @@ describe('ScorchedEarth', () => {
         });
 
         expect(userDepositTx.receipt.status).to.be.true;
+
+        const state2: State = {
+            isFinal: false,
+            channel: channel,
+            outcome: startingOutcome,
+            appDefinition: instance.address,
+            appData: ethers.constants.HashZero, // TODO SEData
+            challengeDuration: 1,
+            turnNum: 2,
+        };
+
+        const state3: State = {
+            isFinal: false,
+            channel: channel,
+            outcome: startingOutcome,
+            appDefinition: instance.address,
+            appData: ethers.constants.HashZero, // TODO SEData
+            challengeDuration: 1,
+            turnNum: 3,
+        }
+
+        const postFundSigs = await signStates([state2, state3], wallets, whoSignedWhat);
+
+        const postFundCheckpointTx = await adjudicator.checkpoint(
+            getFixedPart(state3),
+            state3.turnNum,
+            [getVariablePart(state2), getVariablePart(state3)],
+            0,
+            postFundSigs,
+            whoSignedWhat,
+            {from: user}
+        );
+
+        expect(postFundCheckpointTx.receipt.status).to.be.true;
     });
 
     it('should not be valid transition when Phase is unchanged', async () => {
