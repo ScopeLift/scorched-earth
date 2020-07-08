@@ -209,6 +209,65 @@ describe('ScorchedEarth', () => {
         );
 
         expect(postFundCheckpointTx.receipt.status).to.be.true;
+
+        const fromAppData: SEData = {
+            payment: bigNumberify(5).toString(),
+            userBurn: bigNumberify(1).toString(),
+            suggesterBurn: bigNumberify(1).toString(),
+            phase: Phase.Share,
+            reaction: Reaction.None,
+            suggestion: 'https://ethereum.org/'
+        };
+
+        const fromAppDataBytes = encodeSEData(fromAppData);
+
+        // TODO: update outcomes
+        // fix signature orders
+
+        const state4: State = {
+            isFinal: false,
+            channel: channel,
+            outcome: startingOutcome,
+            appDefinition: instance.address,
+            appData: fromAppDataBytes,
+            challengeDuration: 1,
+            turnNum: 4,
+        }
+
+        const toAppData: SEData = {
+            payment: bigNumberify(5).toString(),
+            userBurn: bigNumberify(1).toString(),
+            suggesterBurn: bigNumberify(1).toString(),
+            phase: Phase.React,
+            reaction: Reaction.Burn,
+            suggestion: ''
+        };
+
+        const toAppDataBytes = encodeSEData(toAppData);
+
+        const state5: State = {
+            isFinal: false,
+            channel: channel,
+            outcome: startingOutcome,
+            appDefinition: instance.address,
+            appData: toAppDataBytes,
+            challengeDuration: 1,
+            turnNum: 5,
+        }
+
+        const postSetupSigs = await signStates([state4, state5], wallets, whoSignedWhat);
+
+        const postSetupCheckpointTx = await adjudicator.checkpoint(
+            getFixedPart(state5),
+            state5.turnNum,
+            [getVariablePart(state4), getVariablePart(state5)],
+            0,
+            postSetupSigs,
+            whoSignedWhat,
+            {from: user}
+        );
+
+        expect(postSetupCheckpointTx.receipt.status).to.be.true;
     });
 
     it('should not be valid transition when Phase is unchanged', async () => {
