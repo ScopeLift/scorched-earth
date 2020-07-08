@@ -17,7 +17,9 @@ import {
     encodeOutcome,
     randomExternalDestination,
     ContractArtifacts,
-    OutcomeShortHand
+    OutcomeShortHand,
+    hashAppPart,
+    hashOutcome
 } from '@statechannels/nitro-protocol';
 
 const ScorchedEarth = contract.fromArtifact('ScorchedEarth');
@@ -114,7 +116,7 @@ describe('ScorchedEarth', () => {
     it('should perform an end to end test that transfers assets', async () => {
         const chainId = "0x1234";
         const channelNonce = bigNumberify(0).toHexString();
-        const participants = [user, suggester];
+        const participants = [suggester, user];
         const channel: Channel = { chainId, channelNonce, participants };
         const channelId = getChannelId(channel);
 
@@ -141,8 +143,8 @@ describe('ScorchedEarth', () => {
         }
 
         const wallets = [
-            new ethers.Wallet("0x" + keys.private_keys[user.toLowerCase()]),
             new ethers.Wallet("0x" + keys.private_keys[suggester.toLocaleLowerCase()]),
+            new ethers.Wallet("0x" + keys.private_keys[user.toLowerCase()]),
         ];
 
         const whoSignedWhat = [0, 1];
@@ -209,6 +211,148 @@ describe('ScorchedEarth', () => {
         );
 
         expect(postFundCheckpointTx.receipt.status).to.be.true;
+
+        const fromAppData: SEData = {
+            payment: bigNumberify(2).toString(),
+            userBurn: bigNumberify(1).toString(),
+            suggesterBurn: bigNumberify(1).toString(),
+            phase: Phase.Share,
+            reaction: Reaction.None,
+            suggestion: 'https://ethereum.org/'
+        };
+
+        const fromAppDataBytes = encodeSEData(fromAppData);
+
+        const state4: State = {
+            isFinal: false,
+            channel: channel,
+            outcome: createOutcome({
+                user: 9,
+                suggester: 9,
+                beneficiary: 2,
+            }),
+            appDefinition: instance.address,
+            appData: fromAppDataBytes,
+            challengeDuration: 1,
+            turnNum: 4,
+        }
+
+        const toAppData: SEData = {
+            payment: bigNumberify(2).toString(),
+            userBurn: bigNumberify(1).toString(),
+            suggesterBurn: bigNumberify(1).toString(),
+            phase: Phase.React,
+            reaction: Reaction.Pay,
+            suggestion: ''
+        };
+
+        const toAppDataBytes = encodeSEData(toAppData);
+
+        const state5: State = {
+            isFinal: false,
+            channel: channel,
+            outcome: createOutcome({
+                user: 8,
+                suggester: 12,
+                beneficiary: 0,
+            }),
+            appDefinition: instance.address,
+            appData: toAppDataBytes,
+            challengeDuration: 1,
+            turnNum: 5,
+        }
+
+        const postSetupSigs = await signStates([state4, state5], wallets, whoSignedWhat);
+
+        const postSetupCheckpointTx = await adjudicator.checkpoint(
+            getFixedPart(state5),
+            state5.turnNum,
+            [getVariablePart(state4), getVariablePart(state5)],
+            0,
+            postSetupSigs,
+            whoSignedWhat,
+            {from: user}
+        );
+
+        expect(postSetupCheckpointTx.receipt.status).to.be.true;
+
+        // Final
+
+        const finalFromAppData: SEData = {
+            payment: bigNumberify(2).toString(),
+            userBurn: bigNumberify(1).toString(),
+            suggesterBurn: bigNumberify(1).toString(),
+            phase: Phase.Share,
+            reaction: Reaction.None,
+            suggestion: 'https://ethereum.org/'
+        };
+
+        const finalFromAppDataBytes = encodeSEData(finalFromAppData);
+
+        const state6: State = {
+            isFinal: false,
+            channel: channel,
+            outcome: createOutcome({
+                user: 7,
+                suggester: 11,
+                beneficiary: 2,
+            }),
+            appDefinition: instance.address,
+            appData: finalFromAppDataBytes,
+            challengeDuration: 1,
+            turnNum: 6,
+        }
+
+        const finalToAppData: SEData = {
+            payment: bigNumberify(2).toString(),
+            userBurn: bigNumberify(1).toString(),
+            suggesterBurn: bigNumberify(1).toString(),
+            phase: Phase.React,
+            reaction: Reaction.Burn,
+            suggestion: ''
+        };
+
+        const finalToAppDataBytes = encodeSEData(finalToAppData);
+
+        const state7: State = {
+            isFinal: true,
+            channel: channel,
+            outcome: createOutcome({
+                user: 7,
+                suggester: 11,
+                beneficiary: 2,
+            }),
+            appDefinition: instance.address,
+            appData: finalToAppDataBytes,
+            challengeDuration: 1,
+            turnNum: 7,
+        }
+
+        const finalSigs = await signStates([state6, state7], wallets, whoSignedWhat);
+
+        const finalCheckpointTx = await adjudicator.checkpoint(
+            getFixedPart(state7),
+            state7.turnNum,
+            [getVariablePart(state6), getVariablePart(state7)],
+            1,
+            finalSigs,
+            whoSignedWhat,
+            {from: user}
+        );
+
+        expect(finalCheckpointTx.receipt.status).to.be.true;
+
+        // const concludeTx = await adjudicator.conclude(
+        //     7,
+        //     getFixedPart(state7),
+        //     hashAppPart(state7),
+        //     hashOutcome(state7.outcome),
+        //     1,
+        //     [0],
+        //     [finalSigs[1]],
+        // );
+
+        // console.log(concludeTx);
     });
 
     it('should not be valid transition when Phase is unchanged', async () => {
