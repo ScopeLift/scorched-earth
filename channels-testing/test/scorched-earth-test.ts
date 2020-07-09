@@ -114,9 +114,14 @@ describe('ScorchedEarth', () => {
     });
 
     it('should perform an end to end test that transfers assets', async () => {
+        const wallets = [
+            ethers.Wallet.createRandom(), // suggester ephemeral key
+            ethers.Wallet.createRandom(), // user ephermeral key
+        ];
+
         const chainId = "0x1234";
         const channelNonce = bigNumberify(0).toHexString();
-        const participants = [suggester, user];
+        const participants = [wallets[0].address, wallets[1].address];
         const channel: Channel = { chainId, channelNonce, participants };
         const channelId = getChannelId(channel);
 
@@ -141,11 +146,6 @@ describe('ScorchedEarth', () => {
             challengeDuration: 1,
             turnNum: 1,
         }
-
-        const wallets = [
-            new ethers.Wallet("0x" + keys.private_keys[suggester.toLocaleLowerCase()]),
-            new ethers.Wallet("0x" + keys.private_keys[user.toLowerCase()]),
-        ];
 
         const whoSignedWhat = [0, 1];
         const preFundSigs = await signStates([state0, state1], wallets, whoSignedWhat);
@@ -350,9 +350,24 @@ describe('ScorchedEarth', () => {
             1,
             [0, 0],
             finalSigs,
+            {from: user},
         );
 
         expect(concludeTx.receipt.status).to.be.true;
+
+        const concludeBlock = await web3.eth.getBlock(concludeTx.receipt.blockHash);
+
+        const pushOutcomeTx = await adjudicator.pushOutcome(
+            channelId,
+            0,
+            concludeBlock.timestamp,
+            ethers.constants.HashZero,
+            ethers.constants.AddressZero,
+            encodeOutcome(state7.outcome),
+            {from: user},
+        );
+
+        console.log(pushOutcomeTx);
     });
 
     it('should not be valid transition when Phase is unchanged', async () => {
