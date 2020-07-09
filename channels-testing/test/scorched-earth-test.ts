@@ -211,7 +211,7 @@ describe('ScorchedEarth', () => {
         expect(postFundCheckpointTx.receipt.status).to.be.true;
 
         const fromAppData: SEData = {
-            payment: bigNumberify(5).toString(),
+            payment: bigNumberify(2).toString(),
             userBurn: bigNumberify(1).toString(),
             suggesterBurn: bigNumberify(1).toString(),
             phase: Phase.Share,
@@ -221,13 +221,14 @@ describe('ScorchedEarth', () => {
 
         const fromAppDataBytes = encodeSEData(fromAppData);
 
-        // TODO: update outcomes
-        // fix signature orders
-
         const state4: State = {
             isFinal: false,
             channel: channel,
-            outcome: startingOutcome,
+            outcome: createOutcome({
+                user: 9,
+                suggester: 9,
+                beneficiary: 2,
+            }),
             appDefinition: instance.address,
             appData: fromAppDataBytes,
             challengeDuration: 1,
@@ -235,11 +236,11 @@ describe('ScorchedEarth', () => {
         }
 
         const toAppData: SEData = {
-            payment: bigNumberify(5).toString(),
+            payment: bigNumberify(2).toString(),
             userBurn: bigNumberify(1).toString(),
             suggesterBurn: bigNumberify(1).toString(),
             phase: Phase.React,
-            reaction: Reaction.Burn,
+            reaction: Reaction.Pay,
             suggestion: ''
         };
 
@@ -248,7 +249,11 @@ describe('ScorchedEarth', () => {
         const state5: State = {
             isFinal: false,
             channel: channel,
-            outcome: startingOutcome,
+            outcome: createOutcome({
+                user: 8,
+                suggester: 11,
+                beneficiary: 0,
+            }),
             appDefinition: instance.address,
             appData: toAppDataBytes,
             challengeDuration: 1,
