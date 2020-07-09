@@ -251,7 +251,7 @@ describe('ScorchedEarth', () => {
             channel: channel,
             outcome: createOutcome({
                 user: 8,
-                suggester: 11,
+                suggester: 12,
                 beneficiary: 0,
             }),
             appDefinition: instance.address,
@@ -273,6 +273,72 @@ describe('ScorchedEarth', () => {
         );
 
         expect(postSetupCheckpointTx.receipt.status).to.be.true;
+
+        // Final
+
+        const finalFromAppData: SEData = {
+            payment: bigNumberify(2).toString(),
+            userBurn: bigNumberify(1).toString(),
+            suggesterBurn: bigNumberify(1).toString(),
+            phase: Phase.Share,
+            reaction: Reaction.None,
+            suggestion: 'https://ethereum.org/'
+        };
+
+        const finalFromAppDataBytes = encodeSEData(finalFromAppData);
+
+        const state6: State = {
+            isFinal: false,
+            channel: channel,
+            outcome: createOutcome({
+                user: 7,
+                suggester: 11,
+                beneficiary: 2,
+            }),
+            appDefinition: instance.address,
+            appData: finalFromAppDataBytes,
+            challengeDuration: 1,
+            turnNum: 6,
+        }
+
+        const finalToAppData: SEData = {
+            payment: bigNumberify(2).toString(),
+            userBurn: bigNumberify(1).toString(),
+            suggesterBurn: bigNumberify(1).toString(),
+            phase: Phase.React,
+            reaction: Reaction.Burn,
+            suggestion: ''
+        };
+
+        const finalToAppDataBytes = encodeSEData(finalToAppData);
+
+        const state7: State = {
+            isFinal: true,
+            channel: channel,
+            outcome: createOutcome({
+                user: 7,
+                suggester: 11,
+                beneficiary: 2,
+            }),
+            appDefinition: instance.address,
+            appData: finalToAppDataBytes,
+            challengeDuration: 1,
+            turnNum: 7,
+        }
+
+        const finalSigs = await signStates([state6, state7], wallets, whoSignedWhat);
+
+        const finalCheckpointTx = await adjudicator.checkpoint(
+            getFixedPart(state7),
+            state7.turnNum,
+            [getVariablePart(state6), getVariablePart(state7)],
+            1,
+            finalSigs,
+            whoSignedWhat,
+            {from: user}
+        );
+
+        expect(finalCheckpointTx.receipt.status).to.be.true;
     });
 
     it('should not be valid transition when Phase is unchanged', async () => {
