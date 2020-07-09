@@ -328,7 +328,7 @@ describe('ScorchedEarth', () => {
             turnNum: 7,
         }
 
-        const finalSigs = await signStates([state6, state7], wallets, whoSignedWhat);
+        const finalSigs = await signStates([state6, state7], wallets, [1, 1]);
 
         const finalCheckpointTx = await adjudicator.checkpoint(
             getFixedPart(state7),
@@ -336,23 +336,23 @@ describe('ScorchedEarth', () => {
             [getVariablePart(state6), getVariablePart(state7)],
             1,
             finalSigs,
-            whoSignedWhat,
+            [1, 1],
             {from: user}
         );
 
         expect(finalCheckpointTx.receipt.status).to.be.true;
 
-        // const concludeTx = await adjudicator.conclude(
-        //     7,
-        //     getFixedPart(state7),
-        //     hashAppPart(state7),
-        //     hashOutcome(state7.outcome),
-        //     1,
-        //     [0],
-        //     [finalSigs[1]],
-        // );
+        const concludeTx = await adjudicator.conclude(
+            7,
+            getFixedPart(state7),
+            hashAppPart(state7),
+            hashOutcome(state7.outcome),
+            1,
+            [0, 0],
+            finalSigs,
+        );
 
-        // console.log(concludeTx);
+        expect(concludeTx.receipt.status).to.be.true;
     });
 
     it('should not be valid transition when Phase is unchanged', async () => {
