@@ -17,7 +17,9 @@ import {
     encodeOutcome,
     randomExternalDestination,
     ContractArtifacts,
-    OutcomeShortHand
+    OutcomeShortHand,
+    hashAppPart,
+    hashOutcome
 } from '@statechannels/nitro-protocol';
 
 const ScorchedEarth = contract.fromArtifact('ScorchedEarth');
@@ -114,7 +116,7 @@ describe('ScorchedEarth', () => {
     it('should perform an end to end test that transfers assets', async () => {
         const chainId = "0x1234";
         const channelNonce = bigNumberify(0).toHexString();
-        const participants = [user, suggester];
+        const participants = [suggester, user];
         const channel: Channel = { chainId, channelNonce, participants };
         const channelId = getChannelId(channel);
 
@@ -141,8 +143,8 @@ describe('ScorchedEarth', () => {
         }
 
         const wallets = [
-            new ethers.Wallet("0x" + keys.private_keys[user.toLowerCase()]),
             new ethers.Wallet("0x" + keys.private_keys[suggester.toLocaleLowerCase()]),
+            new ethers.Wallet("0x" + keys.private_keys[user.toLowerCase()]),
         ];
 
         const whoSignedWhat = [0, 1];
@@ -339,6 +341,18 @@ describe('ScorchedEarth', () => {
         );
 
         expect(finalCheckpointTx.receipt.status).to.be.true;
+
+        // const concludeTx = await adjudicator.conclude(
+        //     7,
+        //     getFixedPart(state7),
+        //     hashAppPart(state7),
+        //     hashOutcome(state7.outcome),
+        //     1,
+        //     [0],
+        //     [finalSigs[1]],
+        // );
+
+        // console.log(concludeTx);
     });
 
     it('should not be valid transition when Phase is unchanged', async () => {
