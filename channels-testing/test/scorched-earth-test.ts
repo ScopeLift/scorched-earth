@@ -1,7 +1,7 @@
 import { accounts, contract, web3 } from '@openzeppelin/test-environment';
 import { expectEvent, expectRevert } from '@openzeppelin/test-helpers';
 import { expect } from 'chai';
-import { ethers } from 'ethers';
+import { ethers, BigNumberish, BigNumber } from 'ethers';
 
 import {
     Channel,
@@ -19,7 +19,8 @@ import {
     ContractArtifacts,
     OutcomeShortHand,
     hashAppPart,
-    hashOutcome
+    hashOutcome,
+    encodeAllocation
 } from '@statechannels/nitro-protocol';
 
 const ScorchedEarth = contract.fromArtifact('ScorchedEarth');
@@ -68,8 +69,22 @@ function encodeSEData(seData: SEData): string {
     );
 }
 
+function expectBalanceChange(
+        initialBalance: string,
+        afterBalance: string,
+        expectedChange: number
+    ) {
+        const initialBN = bigNumberify(initialBalance);
+        const afterBN = bigNumberify(afterBalance);
+
+        const change = afterBN.sub(initialBN);
+        const changeEth = web3.utils.fromWei(change.toString(), 'ether');
+
+        expect(changeEth).to.equal(expectedChange.toString());
+}
+
 describe('ScorchedEarth', () => {
-    const [ deployer, user, suggester, beneficiary ] = accounts;
+    const [ sender, user, suggester, beneficiary ] = accounts;
     let instance: any;
 
     let keys: any;
@@ -83,12 +98,16 @@ describe('ScorchedEarth', () => {
         beneficiary: ethers.utils.hexZeroPad(beneficiary, 32),
     };
 
-    function createOutcome(balances: {}) {
-        const nBalances = replaceAddressesAndBigNumberify(balances, addresses) as AssetOutcomeShortHand;
+    function createOutcome(balances: {user: number, suggester: number, beneficiary: number}) {
+        let weiBalances: {} = {
+            [ethers.utils.hexZeroPad(user, 32)]: ethers.utils.parseEther(balances.user.toString()),
+            [ethers.utils.hexZeroPad(suggester, 32)]: ethers.utils.parseEther(balances.suggester.toString()),
+            [ethers.utils.hexZeroPad(beneficiary, 32)]: ethers.utils.parseEther(balances.beneficiary.toString()),
+        };
 
         const allocation: Allocation = [];
-        Object.keys(nBalances).forEach( key => {
-            allocation.push({destination: key, amount: nBalances[key] as string});
+        Object.keys(weiBalances).forEach( key => {
+            allocation.push({destination: key, amount: weiBalances[key] as string});
         });
 
         const outcome = [{assetHolderAddress: assetHolder.address, allocationItems: allocation}];
@@ -96,9 +115,9 @@ describe('ScorchedEarth', () => {
     }
 
     before(async ()=> {
-        instance = await ScorchedEarth.new({from: deployer});
-        adjudicator = await NitroAdjudicator.new({from: deployer});
-        assetHolder = await EthAssetHolder.new(adjudicator.address, {from: deployer});
+        instance = await ScorchedEarth.new({from: sender});
+        adjudicator = await NitroAdjudicator.new({from: sender});
+        assetHolder = await EthAssetHolder.new(adjudicator.address, {from: sender});
         keys = require('../test-keys.json');
     });
 
@@ -114,6 +133,10 @@ describe('ScorchedEarth', () => {
     });
 
     it('should perform an end to end test that transfers assets', async () => {
+        const userInitialBalance = await web3.eth.getBalance(user);
+        const suggesterInitialBalance = await web3.eth.getBalance(suggester);
+        const beneficiaryInitialBalance = await web3.eth.getBalance(beneficiary);
+
         const wallets = [
             ethers.Wallet.createRandom(), // suggester ephemeral key
             ethers.Wallet.createRandom(), // user ephermeral key
@@ -132,7 +155,7 @@ describe('ScorchedEarth', () => {
             channel: channel,
             outcome: startingOutcome,
             appDefinition: instance.address,
-            appData: ethers.constants.HashZero, // TODO SEData
+            appData: ethers.constants.HashZero,
             challengeDuration: 1,
             turnNum: 0,
         };
@@ -142,7 +165,7 @@ describe('ScorchedEarth', () => {
             channel: channel,
             outcome: startingOutcome,
             appDefinition: instance.address,
-            appData: ethers.constants.HashZero, // TODO SEData
+            appData: ethers.constants.HashZero,
             challengeDuration: 1,
             turnNum: 1,
         }
@@ -157,7 +180,7 @@ describe('ScorchedEarth', () => {
             0,
             preFundSigs,
             whoSignedWhat,
-            {from: user}
+            {from: sender}
         );
 
         expect(preFundCheckpointTx.receipt.status).to.be.true;
@@ -167,23 +190,31 @@ describe('ScorchedEarth', () => {
         const suggesterDepositTx = await assetHolder.deposit(channelId, 0, depositAmount, {
             from: suggester,
             value: depositAmount.toString(),
+            gasPrice: "0",
         });
 
+        const suggesterPostDepositBalance = await web3.eth.getBalance(suggester);
+
         expect(suggesterDepositTx.receipt.status).to.be.true;
+        expectBalanceChange(suggesterInitialBalance, suggesterPostDepositBalance, -10);
 
         const userDepositTx = await assetHolder.deposit(channelId, depositAmount, depositAmount, {
             from: user,
             value: depositAmount.toString(),
+            gasPrice: "0",
         });
 
+        const userPostDepositBalance = await web3.eth.getBalance(user);
+
         expect(userDepositTx.receipt.status).to.be.true;
+        expectBalanceChange(userInitialBalance, userPostDepositBalance, -10)
 
         const state2: State = {
             isFinal: false,
             channel: channel,
             outcome: startingOutcome,
             appDefinition: instance.address,
-            appData: ethers.constants.HashZero, // TODO SEData
+            appData: ethers.constants.HashZero,
             challengeDuration: 1,
             turnNum: 2,
         };
@@ -193,7 +224,7 @@ describe('ScorchedEarth', () => {
             channel: channel,
             outcome: startingOutcome,
             appDefinition: instance.address,
-            appData: ethers.constants.HashZero, // TODO SEData
+            appData: ethers.constants.HashZero,
             challengeDuration: 1,
             turnNum: 3,
         }
@@ -207,7 +238,7 @@ describe('ScorchedEarth', () => {
             0,
             postFundSigs,
             whoSignedWhat,
-            {from: user}
+            {from: sender}
         );
 
         expect(postFundCheckpointTx.receipt.status).to.be.true;
@@ -271,7 +302,7 @@ describe('ScorchedEarth', () => {
             0,
             postSetupSigs,
             whoSignedWhat,
-            {from: user}
+            {from: sender}
         );
 
         expect(postSetupCheckpointTx.receipt.status).to.be.true;
@@ -337,7 +368,7 @@ describe('ScorchedEarth', () => {
             1,
             finalSigs,
             [1, 1],
-            {from: user}
+            {from: sender}
         );
 
         expect(finalCheckpointTx.receipt.status).to.be.true;
@@ -350,7 +381,7 @@ describe('ScorchedEarth', () => {
             1,
             [0, 0],
             finalSigs,
-            {from: user},
+            {from: sender},
         );
 
         expect(concludeTx.receipt.status).to.be.true;
@@ -364,10 +395,26 @@ describe('ScorchedEarth', () => {
             ethers.constants.HashZero,
             ethers.constants.AddressZero,
             encodeOutcome(state7.outcome),
-            {from: user},
+            {from: sender},
         );
 
-        console.log(pushOutcomeTx);
+        expect(pushOutcomeTx.receipt.status).to.be.true;
+
+        const transferAllTx = await assetHolder.transferAll(
+            channelId,
+            encodeAllocation(state7.outcome[0].allocationItems),
+            {from: sender},
+        );
+
+        expect(transferAllTx.receipt.status).to.be.true;
+
+        const userEndBalance = await web3.eth.getBalance(user);
+        const suggesterEndBalance = await web3.eth.getBalance(suggester);
+        const beneficiaryEndBalance = await web3.eth.getBalance(beneficiary);
+
+        expectBalanceChange(userPostDepositBalance, userEndBalance, 7);
+        expectBalanceChange(suggesterPostDepositBalance, suggesterEndBalance, 11);
+        expectBalanceChange(beneficiaryInitialBalance, beneficiaryEndBalance, 2);
     });
 
     it('should not be valid transition when Phase is unchanged', async () => {
