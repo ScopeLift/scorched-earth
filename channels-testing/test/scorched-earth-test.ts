@@ -91,7 +91,7 @@ describe('ScorchedEarth', () => {
             allocation.push({destination: key, amount: nBalances[key] as string});
         });
 
-        const outcome = [{assetHolderAddress: adjudicator.address, allocationItems: allocation}];
+        const outcome = [{assetHolderAddress: assetHolder.address, allocationItems: allocation}];
         return outcome;
     }
 
