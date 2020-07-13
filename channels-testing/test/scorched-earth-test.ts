@@ -1,7 +1,7 @@
 import { accounts, contract, web3 } from '@openzeppelin/test-environment';
-import { expectEvent, expectRevert } from '@openzeppelin/test-helpers';
+import { expectRevert } from '@openzeppelin/test-helpers';
 import { expect } from 'chai';
-import { ethers, BigNumberish, BigNumber } from 'ethers';
+import { ethers } from 'ethers';
 
 import {
     Channel,
@@ -137,6 +137,8 @@ describe('ScorchedEarth', () => {
         const suggesterInitialBalance = await web3.eth.getBalance(suggester);
         const beneficiaryInitialBalance = await web3.eth.getBalance(beneficiary);
 
+        // CHANNEL METADATA
+
         const wallets = [
             ethers.Wallet.createRandom(), // suggester ephemeral key
             ethers.Wallet.createRandom(), // user ephermeral key
@@ -147,6 +149,8 @@ describe('ScorchedEarth', () => {
         const participants = [wallets[0].address, wallets[1].address];
         const channel: Channel = { chainId, channelNonce, participants };
         const channelId = getChannelId(channel);
+
+        // PRE-FUNDING SETUP STEPS
 
         const startingOutcome = createOutcome({user: 10, suggester: 10, beneficiary: 0});
 
@@ -209,6 +213,8 @@ describe('ScorchedEarth', () => {
         expect(userDepositTx.receipt.status).to.be.true;
         expectBalanceChange(userInitialBalance, userPostDepositBalance, -10)
 
+        // POST-FUNDING SETUP STEPS
+
         const state2: State = {
             isFinal: false,
             channel: channel,
@@ -242,6 +248,8 @@ describe('ScorchedEarth', () => {
         );
 
         expect(postFundCheckpointTx.receipt.status).to.be.true;
+
+        // SUGGESTER SHARE -> USER PAYS
 
         const fromAppData: SEData = {
             payment: bigNumberify(2).toString(),
@@ -307,7 +315,7 @@ describe('ScorchedEarth', () => {
 
         expect(postSetupCheckpointTx.receipt.status).to.be.true;
 
-        // Final
+        // SUGGESTER SHARE -> USER BURNS & CLOSES
 
         const finalFromAppData: SEData = {
             payment: bigNumberify(2).toString(),
@@ -373,6 +381,8 @@ describe('ScorchedEarth', () => {
 
         expect(finalCheckpointTx.receipt.status).to.be.true;
 
+        // CLOSE CHANNEL
+
         const concludeTx = await adjudicator.conclude(
             7,
             getFixedPart(state7),
@@ -416,6 +426,8 @@ describe('ScorchedEarth', () => {
         expectBalanceChange(suggesterPostDepositBalance, suggesterEndBalance, 11);
         expectBalanceChange(beneficiaryInitialBalance, beneficiaryEndBalance, 2);
     });
+
+    // TEST TO DEMONSTRATE BASIC ON CHAIN RULE ENCODING W/ FORCE MOVE
 
     it('should not be valid transition when Phase is unchanged', async () => {
         let fromBalances = replaceAddressesAndBigNumberify({user: 10, suggester: 10, beneficiary: 0}, addresses) as AssetOutcomeShortHand;
