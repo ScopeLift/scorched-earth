@@ -38,4 +38,10 @@ Here's an overview of the high level project milestones and current progress:
 ◻️User UI <br />
 ◻️Soft launch on mainnet
 
+## License
+
+Scorched Earth is available under the [MIT](LICENSE.txt) license.
+
+Copyright (c) 2020 ScopeLift.
+
 
