@@ -1,0 +1,16 @@
+{
+  "name": "scorched-earth-contracts",
+  "version": "0.0.1",
+  "description": "Smart contracts for Scorched Earth dencentralized content suggestions",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@openzeppelin/cli": "^2.8.2",
+    "@openzeppelin/test-environment": "^0.1.4",
+    "@openzeppelin/test-helpers": "^0.5.6"
+  }
+}
