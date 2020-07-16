@@ -22,6 +22,7 @@
     "typescript": "^3.9.6"
   },
   "dependencies": {
-    "@openzeppelin/contracts-ethereum-package": "^3.0.0"
+    "@openzeppelin/contracts-ethereum-package": "^3.0.0",
+    "ethers": "^5.0.5"
   }
 }
