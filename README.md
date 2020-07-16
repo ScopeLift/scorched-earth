@@ -10,6 +10,12 @@ The core premise of the scheme is a behavioral "resentment" assumption. Briefly,
 
 Our hypothesis is that if the seller knows this possibility exists, they will be unlikely to provide a good or service they know to be subpar. In order to test this, we propose the following experiment.
 
+## Contributors
+
+* This project was conceived of and championed by [Barry Whitehat](https://github.com/barryWhiteHat), who also wrote much of the [specification](SPEC.md).
+* [Koh Wei Jie](https://github.com/weijiekoh) also contributed to the development of the specification and architecture of the project.
+* Thanks to [Liam Horne](https://github.com/snario) and the team at [State Channels](https://statechannels.org/) for support with their developer toolkit.
+
 
 ## High Level Product Description
 
