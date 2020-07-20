@@ -1,7 +1,14 @@
 import { accounts, contract, web3 } from '@openzeppelin/test-environment';
-import { } from '@openzeppelin/test-helpers';
+import { expectRevert } from '@openzeppelin/test-helpers';
 import { expect } from 'chai';
 import { ethers } from 'ethers';
+
+import {
+    Allocation,
+    Outcome,
+    encodeOutcome,
+    VariablePart,
+} from '@statechannels/nitro-protocol';
 
 const ScorchedEarth = contract.fromArtifact('ScorchedEarth');
 
@@ -32,8 +39,68 @@ describe('ScorchedEarth Force Move Implementation', () => {
         instance = await factory.deploy();
     });
 
-    it('should see the deployed ScorchedEarth, adjudicator, & asset holder contracts', async () => {
+    it('should see the deployed ScorchedEarth contract', async () => {
         expect(instance.address.startsWith('0x')).to.be.true;
         expect(instance.address.length).to.equal(42);
+    });
+
+    it('should not allow an outcome with more than one asset allocation', async () => {
+        const fromOutcome: Outcome = [
+            {assetHolderAddress: ethers.constants.AddressZero, allocationItems: []},
+            {assetHolderAddress: ethers.constants.AddressZero, allocationItems: []}, // second asset allocation
+        ];
+
+        const toOutcome: Outcome = [
+            {assetHolderAddress: ethers.constants.AddressZero, allocationItems: []},
+        ];
+
+        const appData = ethers.utils.defaultAbiCoder.encode([], []);
+
+        const fromVariablePart: VariablePart = {
+            outcome: encodeOutcome(fromOutcome),
+            appData: appData,
+        };
+
+        const toVariablePart: VariablePart = {
+            outcome: encodeOutcome(toOutcome),
+            appData: appData,
+        };
+
+        let validationTx = instance.validTransition(fromVariablePart, toVariablePart, 4, 2);
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Only one asset allowed",
+        );
+    });
+
+    it('should not allow an outcome with 0 allocations', async () => {
+        const fromOutcome: Outcome = [
+            {assetHolderAddress: ethers.constants.AddressZero, allocationItems: []},
+        ];
+
+
+        const toOutcome: Outcome = [
+            {assetHolderAddress: ethers.constants.AddressZero, allocationItems: []},
+        ];
+
+        const appData = ethers.utils.defaultAbiCoder.encode([], []);
+
+        const fromVariablePart: VariablePart = {
+            outcome: encodeOutcome(fromOutcome),
+            appData: appData,
+        };
+
+        const toVariablePart: VariablePart = {
+            outcome: encodeOutcome(toOutcome),
+            appData: appData,
+        };
+
+        let validationTx = instance.validTransition(fromVariablePart, toVariablePart, 4, 2);
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Allocation length must be 3 (Suggester, Sender, Burner)",
+        );
     });
 });
