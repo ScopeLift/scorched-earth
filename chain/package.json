@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts-ethereum-package": "^3.0.0",
+    "@statechannels/nitro-protocol": "^0.1.5",
     "ethers": "^5.0.5"
   }
 }
