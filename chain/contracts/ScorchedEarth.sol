@@ -44,6 +44,8 @@ contract ScorchedEarth is ForceMoveApp {
         Outcome.AllocationItem[] memory fromAllocation = extractAllocation(_fromPart);
         Outcome.AllocationItem[] memory toAllocation = extractAllocation(_toPart);
 
+        requireDestinationsUnchanged(fromAllocation, toAllocation);
+
         return true;
     }
 
@@ -76,5 +78,26 @@ contract ScorchedEarth is ForceMoveApp {
         );
 
         return allocation;
+    }
+
+    function requireDestinationsUnchanged(
+        Outcome.AllocationItem[] memory _fromAllocation,
+        Outcome.AllocationItem[] memory _toAllocation
+    ) private pure
+    {
+        require(
+            _toAllocation[0].destination == _fromAllocation[0].destination,
+            'ScorchedEarth: Destination for User may not change'
+        );
+
+        require(
+            _toAllocation[1].destination == _fromAllocation[1].destination,
+            'ScorchedEarth: Destination for Suggester may not change'
+        );
+
+        require(
+            _toAllocation[2].destination == _fromAllocation[2].destination,
+            'ScorchedEarth: Destination for Burner may not change'
+        );
     }
 }
