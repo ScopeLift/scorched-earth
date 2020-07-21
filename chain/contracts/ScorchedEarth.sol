@@ -46,6 +46,13 @@ contract ScorchedEarth is ForceMoveApp {
 
         requireDestinationsUnchanged(fromAllocation, toAllocation);
 
+        // decode ScorchedEarth specific data
+        SEData memory fromData = appData(_fromPart.appData);
+        SEData memory toData = appData(_toPart.appData);
+
+        requireInternalCoherence(fromData);
+        requireInternalCoherence(toData);
+
         return true;
     }
 
@@ -99,5 +106,24 @@ contract ScorchedEarth is ForceMoveApp {
             _toAllocation[2].destination == _fromAllocation[2].destination,
             'ScorchedEarth: Destination for Burner may not change'
         );
+    }
+
+    function requireInternalCoherence(SEData memory _data) private pure {
+        if (_data.phase == Phase.Suggest) {
+            require(_data.reaction == Reaction.None,
+                    'ScorchedEarth: Suggest Phase must not have Reaction');
+
+            require(bytes(_data.suggestion).length > 0,
+                    'ScorchedEarth: Suggest Phase must have suggestion');
+        }
+        else if (_data.phase == Phase.React) {
+            require(_data.reaction != Reaction.None,
+                    'ScorchedEarth: React Phase must have Reaction');
+
+            require(bytes(_data.suggestion).length == 0,
+                    'ScorchedEarth: React Phase must not have suggestion');
+        } else {
+            require(false, 'ScorchedEarth: Invalid phase');
+        }
     }
 }

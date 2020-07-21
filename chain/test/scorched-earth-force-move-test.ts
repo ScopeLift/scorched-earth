@@ -2,7 +2,6 @@ import { accounts, contract, web3 } from '@openzeppelin/test-environment';
 import { expectRevert } from '@openzeppelin/test-helpers';
 import { expect } from 'chai';
 import { ethers } from 'ethers';
-import OutcomeBuilder from './OutcomeBuilder';
 
 import {
     Allocation,
@@ -11,7 +10,11 @@ import {
     VariablePart,
 } from '@statechannels/nitro-protocol';
 
+import OutcomeBuilder from './OutcomeBuilder';
+import { Phase, Reaction, SEDataBuilder } from './SEData';
+
 const ScorchedEarth = contract.fromArtifact('ScorchedEarth');
+const suggestion = 'https://ethereum.org/static/22580a5e7d69e200d6b2d2131904fbdf/32411/doge_computer.png';
 
 describe('ScorchedEarth Force Move Implementation', () => {
     const [ sender, user, suggester, burner ] = accounts;
@@ -21,6 +24,7 @@ describe('ScorchedEarth Force Move Implementation', () => {
     let instance: ethers.Contract;
     let keys: {private_keys: string};
     let outcomeBuilder = new OutcomeBuilder({user, suggester, burner,});
+    let dataBuilder = new SEDataBuilder({payment: 5, userBurn: 2, suggesterBurn: 2});
 
     before(async () => {
         // Test the provider and make sure ganache is running before loading keys
@@ -110,15 +114,15 @@ describe('ScorchedEarth Force Move Implementation', () => {
         const balances = {user: 100, suggester: 100, burner: 0};
         const appData = ethers.utils.defaultAbiCoder.encode([], []);
 
-        const fromOutcome = outcomeBuilder.createOutcome(balances);
+        const fromOutcome = outcomeBuilder.createEncodedOutcome(balances);
 
         // Switch User and Suggester
         const switchedBuilder = new OutcomeBuilder({user: suggester, suggester: user, burner: burner});
-        const switchedOutcome = switchedBuilder.createOutcome(balances);
+        const switchedOutcome = switchedBuilder.createEncodedOutcome(balances);
 
         let switchedTx = instance.validTransition(
-                {outcome: encodeOutcome(fromOutcome), appData},
-                {outcome: encodeOutcome(switchedOutcome), appData},
+                {outcome: fromOutcome, appData},
+                {outcome: switchedOutcome, appData},
                 4,
                 2
             );
@@ -130,11 +134,11 @@ describe('ScorchedEarth Force Move Implementation', () => {
 
         // Totally change the Burner
         const changedBuilder = new OutcomeBuilder({user, suggester, burner: sender});
-        const changedOutcome = changedBuilder.createOutcome(balances);
+        const changedOutcome = changedBuilder.createEncodedOutcome(balances);
 
         let changedTx = instance.validTransition(
-                {outcome: encodeOutcome(fromOutcome), appData},
-                {outcome: encodeOutcome(changedOutcome), appData},
+                {outcome: fromOutcome, appData},
+                {outcome: changedOutcome, appData},
                 4,
                 2,
             );
@@ -142,6 +146,118 @@ describe('ScorchedEarth Force Move Implementation', () => {
         await expectRevert(
             changedTx,
             "ScorchedEarth: Destination for Burner may not change",
+        );
+    });
+
+    it('should not accept a share phase that has a reaction', async () => {
+        const outcome = outcomeBuilder.createEncodedOutcome({user: 100, suggester: 100, burner: 0});
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.Reward,
+            suggestion: suggestion,
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Burn,
+            suggestion: '',
+        });
+
+        let validationTx = instance.validTransition(
+            {outcome, appData: fromData},
+            {outcome, appData: toData},
+            4,
+            2,
+        );
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Suggest Phase must not have Reaction",
+        );
+    });
+
+    it('should not accept a react phase that has no reaction', async () => {
+        const outcome = outcomeBuilder.createEncodedOutcome({user: 100, suggester: 100, burner: 0});
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.None,
+            suggestion: '',
+        });
+
+        let validationTx = instance.validTransition(
+            {outcome, appData: fromData},
+            {outcome, appData: toData},
+            4,
+            2,
+        );
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: React Phase must have Reaction",
+        );
+    });
+
+    it('should not accept a suggest phase that has no suggestion', async () => {
+        const outcome = outcomeBuilder.createEncodedOutcome({user: 100, suggester: 100, burner: 0});
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: '',
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Burn,
+            suggestion: '',
+        });
+
+        let validationTx = instance.validTransition(
+            {outcome, appData: fromData},
+            {outcome, appData: toData},
+            4,
+            2,
+        );
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Suggest Phase must have suggestion",
+        );
+    });
+
+    it('should not accept a react phase that has a suggestion', async () => {
+        const outcome = outcomeBuilder.createEncodedOutcome({user: 100, suggester: 100, burner: 0});
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Burn,
+            suggestion: suggestion,
+        });
+
+        let validationTx = instance.validTransition(
+            {outcome, appData: fromData},
+            {outcome, appData: toData},
+            4,
+            2,
+        );
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: React Phase must not have suggestion",
         );
     });
 });

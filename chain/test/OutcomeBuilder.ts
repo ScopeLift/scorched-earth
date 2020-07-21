@@ -3,6 +3,7 @@ import {
     Outcome,
     AssetOutcomeShortHand,
     replaceAddressesAndBigNumberify,
+    encodeOutcome,
 } from '@statechannels/nitro-protocol';
 
 import { ethers } from 'ethers';
@@ -34,6 +35,11 @@ class OutcomeBuilder {
 
         const outcome = [{assetHolderAddress: assetHolder, allocationItems: allocation}];
         return outcome;
+    }
+
+    createEncodedOutcome(balances: BalanceMap, assetHolder: Address = ethers.constants.AddressZero): string {
+        const outcome = this.createOutcome(balances, assetHolder);
+        return encodeOutcome(outcome);
     }
 }
 
