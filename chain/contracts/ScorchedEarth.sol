@@ -53,6 +53,7 @@ contract ScorchedEarth is ForceMoveApp {
         requireInternalCoherence(fromData);
         requireInternalCoherence(toData);
         requireCoreParametersUnchanged(fromData, toData);
+        requirePhaseToggle(fromData, toData);
 
         return true;
     }
@@ -139,5 +140,14 @@ contract ScorchedEarth is ForceMoveApp {
             _fromData.userBurn == _toData.userBurn,
             'ScorchedEarth: Core parameters must not change'
         );
+    }
+
+    function requirePhaseToggle(
+        SEData memory fromData,
+        SEData memory toData
+    ) private pure
+    {
+        require(fromData.phase != toData.phase,
+                'ScorchedEarth: Phase must toggle');
     }
 }

@@ -347,4 +347,60 @@ describe('ScorchedEarth Force Move Implementation', () => {
             "ScorchedEarth: Core parameters must not change",
         );
     });
+
+    it('should not accept two suggest phases in a row', async () => {
+        const outcome = outcomeBuilder.createEncodedOutcome({user: 100, suggester: 100, burner: 0});
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        let validationTx = instance.validTransition(
+            {outcome, appData: fromData},
+            {outcome, appData: toData},
+            4,
+            2,
+        );
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Phase must toggle",
+        );
+    });
+
+    it('should not accept two react phases in a row', async () => {
+        const outcome = outcomeBuilder.createEncodedOutcome({user: 100, suggester: 100, burner: 0});
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Burn,
+            suggestion: '',
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Reward,
+            suggestion: '',
+        });
+
+        let validationTx = instance.validTransition(
+            {outcome, appData: fromData},
+            {outcome, appData: toData},
+            4,
+            2,
+        );
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Phase must toggle",
+        );
+    });
 });
