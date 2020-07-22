@@ -260,4 +260,91 @@ describe('ScorchedEarth Force Move Implementation', () => {
             "ScorchedEarth: React Phase must not have suggestion",
         );
     });
+
+    it('should not allow payment parameter to change between turns', async () => {
+        const outcome = outcomeBuilder.createEncodedOutcome({user: 100, suggester: 100, burner: 0});
+        const badDataBuilder = new SEDataBuilder({payment: 4, userBurn: 2, suggesterBurn: 2});
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        const toData = badDataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Burn,
+            suggestion: '',
+        });
+
+        let validationTx = instance.validTransition(
+            {outcome, appData: fromData},
+            {outcome, appData: toData},
+            4,
+            2,
+        );
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Core parameters must not change",
+        );
+    });
+
+    it('should not allow userBurn parameter to change between turns', async () => {
+        const outcome = outcomeBuilder.createEncodedOutcome({user: 100, suggester: 100, burner: 0});
+        const badDataBuilder = new SEDataBuilder({payment: 5, userBurn: 3, suggesterBurn: 2});
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        const toData = badDataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Burn,
+            suggestion: '',
+        });
+
+        let validationTx = instance.validTransition(
+            {outcome, appData: fromData},
+            {outcome, appData: toData},
+            4,
+            2,
+        );
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Core parameters must not change",
+        );
+    });
+
+    it('should not allow suggesterBurn parameter to change between turns', async () => {
+        const outcome = outcomeBuilder.createEncodedOutcome({user: 100, suggester: 100, burner: 0});
+        const badDataBuilder = new SEDataBuilder({payment: 5, userBurn: 2, suggesterBurn:1});
+
+        const fromData = badDataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Burn,
+            suggestion: '',
+        });
+
+        let validationTx = instance.validTransition(
+            {outcome, appData: fromData},
+            {outcome, appData: toData},
+            4,
+            2,
+        );
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Core parameters must not change",
+        );
+    });
 });

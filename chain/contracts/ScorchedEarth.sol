@@ -52,6 +52,7 @@ contract ScorchedEarth is ForceMoveApp {
 
         requireInternalCoherence(fromData);
         requireInternalCoherence(toData);
+        requireCoreParametersUnchanged(fromData, toData);
 
         return true;
     }
@@ -125,5 +126,18 @@ contract ScorchedEarth is ForceMoveApp {
         } else {
             require(false, 'ScorchedEarth: Invalid phase');
         }
+    }
+
+    function requireCoreParametersUnchanged(
+        SEData memory _fromData,
+        SEData memory _toData
+    ) private pure
+    {
+        require(
+            _fromData.payment == _toData.payment &&
+            _fromData.suggesterBurn == _toData.suggesterBurn &&
+            _fromData.userBurn == _toData.userBurn,
+            'ScorchedEarth: Core parameters must not change'
+        );
     }
 }
