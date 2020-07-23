@@ -37,6 +37,14 @@ class SEDataBuilder {
         suggesterBurn: string
     };
 
+    get parameters() {
+        return {
+            payment: parseInt(this.constants.payment),
+            userBurn: parseInt(this.constants.userBurn),
+            suggesterBurn: parseInt(this.constants.suggesterBurn),
+        };
+    }
+
     constructor(constants: {
         payment: number,
         userBurn: number,

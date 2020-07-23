@@ -54,6 +54,7 @@ contract ScorchedEarth is ForceMoveApp {
         requireInternalCoherence(toData);
         requireCoreParametersUnchanged(fromData, toData);
         requirePhaseToggle(fromData, toData);
+        requireProperAllocations(fromAllocation, toAllocation, toData);
 
         return true;
     }
@@ -149,5 +150,25 @@ contract ScorchedEarth is ForceMoveApp {
     {
         require(fromData.phase != toData.phase,
                 'ScorchedEarth: Phase must toggle');
+    }
+
+    function requireProperAllocations(
+        Outcome.AllocationItem[] memory _fromAllocation,
+        Outcome.AllocationItem[] memory _toAllocation,
+        SEData memory _toData
+    ) private pure
+    {
+        if (_toData.phase == Phase.Suggest) {
+            bool didBurnUser = ( _toAllocation[0].amount == (_fromAllocation[0].amount.sub(_toData.payment).sub(_toData.userBurn)) );
+            bool didBurnSuggester = ( _toAllocation[1].amount == (_fromAllocation[1].amount.sub(_toData.suggesterBurn)) );
+            bool didPayBurner = ( _toAllocation[2].amount == (_fromAllocation[2].amount.add(_toData.payment).add(_toData.userBurn).add(_toData.suggesterBurn)) );
+
+            require(didBurnUser && didBurnSuggester && didPayBurner,
+                    'ScorchedEarth: Suggest Phase must burn funds');
+        } else if (_toData.phase == Phase.React) {
+
+        } else {
+            require(false, 'ScorchedEarth: Invalid phase');
+        }
     }
 }

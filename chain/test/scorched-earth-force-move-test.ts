@@ -403,4 +403,173 @@ describe('ScorchedEarth Force Move Implementation', () => {
             "ScorchedEarth: Phase must toggle",
         );
     });
+
+    it('should not accept if the suggest phase does not assume fund burn', async () => {
+        const outcome = outcomeBuilder.createEncodedOutcome({user: 100, suggester: 100, burner: 0});
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Reward,
+            suggestion: '',
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        let validationTx = instance.validTransition(
+            {outcome, appData: fromData},
+            {outcome, appData: toData},
+            4,
+            2,
+        );
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Suggest Phase must burn funds",
+        );
+    });
+
+    it('should not accept if the suggest phase does not pay the burner', async () => {
+        const initialAllocations = {user: 100, suggester: 100, burner: 0};
+        const parameters = dataBuilder.parameters;
+
+        const fromOutcome = outcomeBuilder.createEncodedOutcome(initialAllocations);
+        const toOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user - parameters.payment - parameters.userBurn,
+            suggester: initialAllocations.suggester - parameters.suggesterBurn,
+            burner: initialAllocations.burner, // WRONG
+        });
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Reward,
+            suggestion: '',
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        let validationTx = instance.validTransition(
+            {outcome: fromOutcome, appData: fromData},
+            {outcome: toOutcome, appData: toData},
+            4,
+            2,
+        );
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Suggest Phase must burn funds",
+        );
+    });
+
+    it('should not accept if the suggest phase does not burn the suggester', async () => {
+        const initialAllocations = {user: 100, suggester: 100, burner: 0};
+        const parameters = dataBuilder.parameters;
+
+        const fromOutcome = outcomeBuilder.createEncodedOutcome(initialAllocations);
+        const toOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user - parameters.payment - parameters.userBurn,
+            suggester: initialAllocations.suggester, // WRONG
+            burner: initialAllocations.burner + parameters.payment + parameters.suggesterBurn + parameters.userBurn,
+        });
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Reward,
+            suggestion: '',
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        let validationTx = instance.validTransition(
+            {outcome: fromOutcome, appData: fromData},
+            {outcome: toOutcome, appData: toData},
+            4,
+            2,
+        );
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Suggest Phase must burn funds",
+        );
+    });
+
+    it('should not accept if the suggest phase does not burn the user', async () => {
+        const initialAllocations = {user: 100, suggester: 100, burner: 0};
+        const parameters = dataBuilder.parameters;
+
+        const fromOutcome = outcomeBuilder.createEncodedOutcome(initialAllocations);
+        const toOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user, // WRONG
+            suggester: initialAllocations.suggester - parameters.suggesterBurn,
+            burner: initialAllocations.burner + parameters.payment + parameters.suggesterBurn + parameters.userBurn,
+        });
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Reward,
+            suggestion: '',
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        let validationTx = instance.validTransition(
+            {outcome: fromOutcome, appData: fromData},
+            {outcome: toOutcome, appData: toData},
+            4,
+            2,
+        );
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Suggest Phase must burn funds",
+        );
+    });
+
+    it('should validate a suggest phase that correctly assumes fund burn', async () => {
+        const initialAllocations = {user: 100, suggester: 100, burner: 0};
+        const parameters = dataBuilder.parameters;
+
+        const fromOutcome = outcomeBuilder.createEncodedOutcome(initialAllocations);
+        const toOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user - parameters.payment - parameters.userBurn,
+            suggester: initialAllocations.suggester - parameters.suggesterBurn,
+            burner: initialAllocations.burner + parameters.payment + parameters.suggesterBurn + parameters.userBurn,
+        });
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Reward,
+            suggestion: '',
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        let isValid = await instance.validTransition(
+            {outcome: fromOutcome, appData: fromData},
+            {outcome: toOutcome, appData: toData},
+            4,
+            2,
+        );
+
+        expect(isValid).to.be.true;
+    });
 });
