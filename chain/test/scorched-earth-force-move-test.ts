@@ -572,4 +572,124 @@ describe('ScorchedEarth Force Move Implementation', () => {
 
         expect(isValid).to.be.true;
     });
+
+    it('should not accept a react phase that does not pay the suggester', async () => {
+        const initialAllocations = {user: 100, suggester: 100, burner: 0};
+        const parameters = dataBuilder.parameters;
+
+        const fromOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user - parameters.payment - parameters.userBurn,
+            suggester: initialAllocations.suggester - parameters.suggesterBurn,
+            burner: initialAllocations.burner + parameters.payment + parameters.suggesterBurn + parameters.userBurn,
+        });
+
+        const toOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user - parameters.payment,
+            suggester: initialAllocations.suggester, // WRONG
+            burner: initialAllocations.burner,
+        });
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Reward,
+            suggestion: '',
+        });
+
+        let validationTx = instance.validTransition(
+            {outcome: fromOutcome, appData: fromData},
+            {outcome: toOutcome, appData: toData},
+            4,
+            2,
+        );
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Reward Reaction must pay",
+        );
+    });
+
+    it('should not accept a react phase that does not spend user funds', async () => {
+        const initialAllocations = {user: 100, suggester: 100, burner: 0};
+        const parameters = dataBuilder.parameters;
+
+        const fromOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user - parameters.payment - parameters.userBurn,
+            suggester: initialAllocations.suggester - parameters.suggesterBurn,
+            burner: initialAllocations.burner + parameters.payment + parameters.suggesterBurn + parameters.userBurn,
+        });
+
+        const toOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user, // WRONG
+            suggester: initialAllocations.suggester + parameters.payment,
+            burner: initialAllocations.burner,
+        });
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Reward,
+            suggestion: '',
+        });
+
+        let validationTx = instance.validTransition(
+            {outcome: fromOutcome, appData: fromData},
+            {outcome: toOutcome, appData: toData},
+            4,
+            2,
+        );
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Reward Reaction must pay",
+        );
+    });
+
+    it('should validate a react phase that correctly rewards the suggester', async () => {
+        const initialAllocations = {user: 100, suggester: 100, burner: 0};
+        const parameters = dataBuilder.parameters;
+
+        const fromOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user - parameters.payment - parameters.userBurn,
+            suggester: initialAllocations.suggester - parameters.suggesterBurn,
+            burner: initialAllocations.burner + parameters.payment + parameters.suggesterBurn + parameters.userBurn,
+        });
+
+        const toOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user - parameters.payment,
+            suggester: initialAllocations.suggester + parameters.payment,
+            burner: initialAllocations.burner,
+        });
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Reward,
+            suggestion: '',
+        });
+
+        let isValid = await instance.validTransition(
+            {outcome: fromOutcome, appData: fromData},
+            {outcome: toOutcome, appData: toData},
+            4,
+            2,
+        );
+
+        expect(isValid).to.be.true;
+    });
 });

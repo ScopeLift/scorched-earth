@@ -126,7 +126,7 @@ contract ScorchedEarth is ForceMoveApp {
             require(bytes(_data.suggestion).length == 0,
                     'ScorchedEarth: React Phase must not have suggestion');
         } else {
-            require(false, 'ScorchedEarth: Invalid phase');
+            require(false, 'ScorchedEarth: Invalid Phase');
         }
     }
 
@@ -166,9 +166,20 @@ contract ScorchedEarth is ForceMoveApp {
             require(didBurnUser && didBurnSuggester && didPayBurner,
                     'ScorchedEarth: Suggest Phase must burn funds');
         } else if (_toData.phase == Phase.React) {
+            if (_toData.reaction == Reaction.Reward) {
+                bool didUserPay = ( _toAllocation[0].amount == (_fromAllocation[0].amount.add(_toData.userBurn)) );
+                bool didPaySuggester = ( _toAllocation[1].amount == (_fromAllocation[1].amount.add(_toData.suggesterBurn).add(_toData.payment)) );
+                bool didUndoBurner = ( _toAllocation[2].amount == (_fromAllocation[2].amount.sub(_toData.payment).sub(_toData.userBurn).sub(_toData.suggesterBurn)) );
 
+                require(didUserPay && didPaySuggester && didUndoBurner,
+                        'ScorchedEarth: Reward Reaction must pay');
+            } else if (_toData.reaction == Reaction.Burn) {
+
+            } else {
+                require(false, 'ScorchedEarth: Invalid reaction');
+            }
         } else {
-            require(false, 'ScorchedEarth: Invalid phase');
+            require(false, 'ScorchedEarth: Invalid Phase');
         }
     }
 }
