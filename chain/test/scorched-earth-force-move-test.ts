@@ -655,6 +655,47 @@ describe('ScorchedEarth Force Move Implementation', () => {
         );
     });
 
+    it('should not accept a react phase that sends the burner funds', async () => {
+        const initialAllocations = {user: 100, suggester: 100, burner: 0};
+        const parameters = dataBuilder.parameters;
+
+        const fromOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user - parameters.payment - parameters.userBurn,
+            suggester: initialAllocations.suggester - parameters.suggesterBurn,
+            burner: initialAllocations.burner + parameters.payment + parameters.suggesterBurn + parameters.userBurn,
+        });
+
+        const toOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user - parameters.payment,
+            suggester: initialAllocations.suggester + parameters.payment,
+            burner: initialAllocations.burner + 1, // WRONG
+        });
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Reward,
+            suggestion: '',
+        });
+
+        let validationTx = instance.validTransition(
+            {outcome: fromOutcome, appData: fromData},
+            {outcome: toOutcome, appData: toData},
+            4,
+            2,
+        );
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Reward Reaction must pay",
+        );
+    });
+
     it('should validate a react phase that correctly rewards the suggester', async () => {
         const initialAllocations = {user: 100, suggester: 100, burner: 0};
         const parameters = dataBuilder.parameters;
@@ -680,6 +721,168 @@ describe('ScorchedEarth Force Move Implementation', () => {
         const toData = dataBuilder.createEncodedSEData({
             phase: Phase.React,
             reaction: Reaction.Reward,
+            suggestion: '',
+        });
+
+        let isValid = await instance.validTransition(
+            {outcome: fromOutcome, appData: fromData},
+            {outcome: toOutcome, appData: toData},
+            4,
+            2,
+        );
+
+        expect(isValid).to.be.true;
+    });
+
+    it('should not accept a react phase that does not burn user funds', async () => {
+        const initialAllocations = {user: 100, suggester: 100, burner: 0};
+        const parameters = dataBuilder.parameters;
+
+        const fromOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user - parameters.payment - parameters.userBurn,
+            suggester: initialAllocations.suggester - parameters.suggesterBurn,
+            burner: initialAllocations.burner + parameters.payment + parameters.suggesterBurn + parameters.userBurn,
+        });
+
+        const toOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user - parameters.payment, // WRONG
+            suggester: initialAllocations.suggester - parameters.suggesterBurn,
+            burner: initialAllocations.burner + parameters.payment + parameters.suggesterBurn,
+        });
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Burn,
+            suggestion: '',
+        });
+
+        let validationTx = instance.validTransition(
+            {outcome: fromOutcome, appData: fromData},
+            {outcome: toOutcome, appData: toData},
+            4,
+            2,
+        );
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Punish Reaction must burn",
+        );
+    });
+
+    it('should not accept a react phase that does not burn suggester funds', async () => {
+        const initialAllocations = {user: 100, suggester: 100, burner: 0};
+        const parameters = dataBuilder.parameters;
+
+        const fromOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user - parameters.payment - parameters.userBurn,
+            suggester: initialAllocations.suggester - parameters.suggesterBurn,
+            burner: initialAllocations.burner + parameters.payment + parameters.suggesterBurn + parameters.userBurn,
+        });
+
+        const toOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user - parameters.payment - parameters.userBurn,
+            suggester: initialAllocations.suggester, // WRONG
+            burner: initialAllocations.burner + parameters.payment + parameters.userBurn,
+        });
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Burn,
+            suggestion: '',
+        });
+
+        let validationTx = instance.validTransition(
+            {outcome: fromOutcome, appData: fromData},
+            {outcome: toOutcome, appData: toData},
+            4,
+            2,
+        );
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Punish Reaction must burn",
+        );
+    });
+
+    it('should not accept a react phase that does send burner funds', async () => {
+        const initialAllocations = {user: 100, suggester: 100, burner: 0};
+        const parameters = dataBuilder.parameters;
+
+        const fromOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user - parameters.payment - parameters.userBurn,
+            suggester: initialAllocations.suggester - parameters.suggesterBurn,
+            burner: initialAllocations.burner + parameters.payment + parameters.suggesterBurn + parameters.userBurn,
+        });
+
+        const toOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user - parameters.payment - parameters.userBurn,
+            suggester: initialAllocations.suggester - parameters.suggesterBurn,
+            burner: initialAllocations.burner, // WRONG
+        });
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Burn,
+            suggestion: '',
+        });
+
+        let validationTx = instance.validTransition(
+            {outcome: fromOutcome, appData: fromData},
+            {outcome: toOutcome, appData: toData},
+            4,
+            2,
+        );
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Punish Reaction must burn",
+        );
+    });
+
+
+    it('should validate a react phase that correctly punishes the suggester', async () => {
+        const initialAllocations = {user: 100, suggester: 100, burner: 0};
+        const parameters = dataBuilder.parameters;
+
+        const fromOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user - parameters.payment - parameters.userBurn,
+            suggester: initialAllocations.suggester - parameters.suggesterBurn,
+            burner: initialAllocations.burner + parameters.payment + parameters.suggesterBurn + parameters.userBurn,
+        });
+
+        const toOutcome = outcomeBuilder.createEncodedOutcome({
+            user: initialAllocations.user - parameters.payment - parameters.userBurn,
+            suggester: initialAllocations.suggester - parameters.suggesterBurn,
+            burner: initialAllocations.burner + parameters.payment + parameters.suggesterBurn + parameters.userBurn,
+        });
+
+        const fromData = dataBuilder.createEncodedSEData({
+            phase: Phase.Suggest,
+            reaction: Reaction.None,
+            suggestion: suggestion,
+        });
+
+        const toData = dataBuilder.createEncodedSEData({
+            phase: Phase.React,
+            reaction: Reaction.Burn,
             suggestion: '',
         });
 

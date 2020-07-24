@@ -174,7 +174,12 @@ contract ScorchedEarth is ForceMoveApp {
                 require(didUserPay && didPaySuggester && didUndoBurner,
                         'ScorchedEarth: Reward Reaction must pay');
             } else if (_toData.reaction == Reaction.Burn) {
-
+                require(
+                    _toAllocation[0].amount == _fromAllocation[0].amount &&
+                    _toAllocation[1].amount == _fromAllocation[1].amount &&
+                    _toAllocation[2].amount == _fromAllocation[2].amount,
+                    'ScorchedEarth: Punish Reaction must burn'
+                );
             } else {
                 require(false, 'ScorchedEarth: Invalid reaction');
             }
