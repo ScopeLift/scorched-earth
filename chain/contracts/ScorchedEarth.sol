@@ -17,7 +17,7 @@ contract ScorchedEarth is ForceMoveApp {
     enum Reaction {
         None, // Not applicable in Suggest phase
         Reward,
-        Burn
+        Punish
     }
 
     struct SEData {
@@ -173,7 +173,7 @@ contract ScorchedEarth is ForceMoveApp {
 
                 require(didUserPay && didPaySuggester && didUndoBurner,
                         'ScorchedEarth: Reward Reaction must pay');
-            } else if (_toData.reaction == Reaction.Burn) {
+            } else if (_toData.reaction == Reaction.Punish) {
                 require(
                     _toAllocation[0].amount == _fromAllocation[0].amount &&
                     _toAllocation[1].amount == _fromAllocation[1].amount &&

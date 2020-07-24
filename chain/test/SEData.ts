@@ -8,7 +8,7 @@ enum Phase {
 enum Reaction {
     None, // Not applicable in Suggest phase
     Reward,
-    Burn,
+    Punish,
 }
 
 interface SEData {

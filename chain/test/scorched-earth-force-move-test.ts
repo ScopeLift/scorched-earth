@@ -160,7 +160,7 @@ describe('ScorchedEarth Force Move Implementation', () => {
 
         const toData = dataBuilder.createEncodedSEData({
             phase: Phase.React,
-            reaction: Reaction.Burn,
+            reaction: Reaction.Punish,
             suggestion: '',
         });
 
@@ -216,7 +216,7 @@ describe('ScorchedEarth Force Move Implementation', () => {
 
         const toData = dataBuilder.createEncodedSEData({
             phase: Phase.React,
-            reaction: Reaction.Burn,
+            reaction: Reaction.Punish,
             suggestion: '',
         });
 
@@ -244,7 +244,7 @@ describe('ScorchedEarth Force Move Implementation', () => {
 
         const toData = dataBuilder.createEncodedSEData({
             phase: Phase.React,
-            reaction: Reaction.Burn,
+            reaction: Reaction.Punish,
             suggestion: suggestion,
         });
 
@@ -273,7 +273,7 @@ describe('ScorchedEarth Force Move Implementation', () => {
 
         const toData = badDataBuilder.createEncodedSEData({
             phase: Phase.React,
-            reaction: Reaction.Burn,
+            reaction: Reaction.Punish,
             suggestion: '',
         });
 
@@ -302,7 +302,7 @@ describe('ScorchedEarth Force Move Implementation', () => {
 
         const toData = badDataBuilder.createEncodedSEData({
             phase: Phase.React,
-            reaction: Reaction.Burn,
+            reaction: Reaction.Punish,
             suggestion: '',
         });
 
@@ -331,7 +331,7 @@ describe('ScorchedEarth Force Move Implementation', () => {
 
         const toData = dataBuilder.createEncodedSEData({
             phase: Phase.React,
-            reaction: Reaction.Burn,
+            reaction: Reaction.Punish,
             suggestion: '',
         });
 
@@ -381,7 +381,7 @@ describe('ScorchedEarth Force Move Implementation', () => {
 
         const fromData = dataBuilder.createEncodedSEData({
             phase: Phase.React,
-            reaction: Reaction.Burn,
+            reaction: Reaction.Punish,
             suggestion: '',
         });
 
@@ -758,7 +758,7 @@ describe('ScorchedEarth Force Move Implementation', () => {
 
         const toData = dataBuilder.createEncodedSEData({
             phase: Phase.React,
-            reaction: Reaction.Burn,
+            reaction: Reaction.Punish,
             suggestion: '',
         });
 
@@ -799,7 +799,7 @@ describe('ScorchedEarth Force Move Implementation', () => {
 
         const toData = dataBuilder.createEncodedSEData({
             phase: Phase.React,
-            reaction: Reaction.Burn,
+            reaction: Reaction.Punish,
             suggestion: '',
         });
 
@@ -840,7 +840,7 @@ describe('ScorchedEarth Force Move Implementation', () => {
 
         const toData = dataBuilder.createEncodedSEData({
             phase: Phase.React,
-            reaction: Reaction.Burn,
+            reaction: Reaction.Punish,
             suggestion: '',
         });
 
@@ -882,7 +882,7 @@ describe('ScorchedEarth Force Move Implementation', () => {
 
         const toData = dataBuilder.createEncodedSEData({
             phase: Phase.React,
-            reaction: Reaction.Burn,
+            reaction: Reaction.Punish,
             suggestion: '',
         });
 
