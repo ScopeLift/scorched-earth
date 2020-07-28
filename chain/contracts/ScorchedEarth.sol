@@ -39,8 +39,10 @@ contract ScorchedEarth is ForceMoveApp {
         VariablePart memory _fromPart,
         VariablePart memory _toPart,
         uint48, // turnNumB
-        uint256  // nParticipants
+        uint256 nParticipants
     ) public pure override returns (bool) {
+        require(2 == nParticipants, "ScorchedEarth: Must have 2 participants");
+
         Outcome.AllocationItem[] memory fromAllocation = extractAllocation(_fromPart);
         Outcome.AllocationItem[] memory toAllocation = extractAllocation(_toPart);
 

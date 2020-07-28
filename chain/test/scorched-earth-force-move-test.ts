@@ -50,6 +50,22 @@ describe('ScorchedEarth Force Move Implementation', () => {
         expect(instance.address.length).to.equal(42);
     });
 
+    it('should not allow more than 2 participants', async () => {
+        const appData = ethers.utils.defaultAbiCoder.encode([], []);
+
+        const variablePart: VariablePart = {
+            outcome: encodeOutcome([]),
+            appData: appData,
+        };
+
+        let validationTx = instance.validTransition(variablePart, variablePart, 4, 3);
+
+        await expectRevert(
+            validationTx,
+            "ScorchedEarth: Must have 2 participants",
+        );
+    });
+
     it('should not allow an outcome with more than one asset allocation', async () => {
         const fromOutcome: Outcome = [
             {assetHolderAddress: ethers.constants.AddressZero, allocationItems: []},
