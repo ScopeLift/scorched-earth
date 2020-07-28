@@ -128,7 +128,7 @@ contract ScorchedEarth is ForceMoveApp {
             require(bytes(_data.suggestion).length == 0,
                     'ScorchedEarth: React Phase must not have suggestion');
         } else {
-            require(false, 'ScorchedEarth: Invalid Phase');
+            revert('ScorchedEarth: Invalid Phase');
         }
     }
 
