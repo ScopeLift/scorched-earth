@@ -17,7 +17,7 @@
     "@types/expect": "^24.3.0",
     "@types/mocha": "^8.0.0",
     "chai": "^4.2.0",
-    "mocha": "^8.0.1",
+    "mocha": "^11.7.5",
     "ts-mocha": "^7.0.0",
     "typescript": "^3.9.6"
   },
